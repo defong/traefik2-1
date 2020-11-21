@@ -8,7 +8,7 @@ services:
 ## Traefik - Reverse Proxy
   traefik:
     container_name: traefik
-    image: traefik:chevrotin # the chevrotin tag refers to v2.2.x
+    image: traefik:picodon # the picodon tag refers to v2.3.x
     restart: always
     command: # CLI arguments
       - --global.checkNewVersion=true
@@ -47,6 +47,7 @@ services:
       - --certificatesResolvers.dns-cloudflare.acme.email=$CLOUDFLARE_EMAIL
       - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesresolvers.dns-cloudflare.acme.dnschallenge.resolvers=$DNS_RESOLVER # pihole IP
     networks:
       traefik_proxy:
         ipv4_address: 192.168.50.254
@@ -70,6 +71,11 @@ services:
     environment:
       - CF_API_EMAIL=$CLOUDFLARE_EMAIL
       - CF_API_KEY=$CLOUDFLARE_API_KEY
+#      - CF_API_EMAIL_FILE=/run/secrets/cf-api-email
+#      - CF_API_KEY_FILE=/run/secrets/cf-api-key
+    secrets:
+      - "cf-api-email"
+      - "cf-api-key"
     labels:
       - "traefik.enable=true"
       # HTTP Routers
@@ -109,6 +115,12 @@ services:
       - "traefik.http.middlewares.traefik-basicauth.basicauth.users=$MY_USERNAME:$TRAEFIK_PASSWORD" # password must be htpasswd hash
       - "traefik.http.routers.traefik-bypass.priority=20"
       - "traefik.http.routers.traefik-bypass.service=api@internal"
+
+secrets:
+   cf-api-email:
+     file: "./secrets/cf-api-email"
+   cf-api-key:
+     file: "./secrets/cf-api-key"
 
 networks:
   traefik_proxy:
